@@ -1,11 +1,13 @@
 import os
+import string
+import random
 import numpy as np
 import tempfile
 from scipy.interpolate import interp1d
 
 class CalCP:
 
-    def __init__(self, A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template'):
+    def __init__(self, A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='./Working'):
         self.A = A
         self.I = L
         self.L = L
@@ -16,7 +18,7 @@ class CalCP:
         self.ampFactor = ampFactor
         self.d_incr = d_incr
         self.considerNum = 10
-        self.workingPath = './Working'
+        self.workingPath = workingPath
         self.templatePath = templatePath
         self.cS= 1.0
         self.cC = 1.0
@@ -74,39 +76,41 @@ class CalCP:
     def shiftBackbone(self):
         self.backboneShifted = np.vstack((self.backbone[0], self.backbone[0] * self.revK + self.backbone[1]))
         self.Res = self.backboneShifted[1,-1] / self.backboneShifted[1,-2]
-        x1 = self.backboneShifted[0,1]
-        y1 = self.backboneShifted[1,1]
-        x2 = self.backboneShifted[0,2]
-        y2 = self.backboneShifted[1,2]
+        x1 = self.backboneShifted[0,2]
+        y1 = self.backboneShifted[1,2]
+        x2 = self.backboneShifted[0,3]
+        y2 = self.backboneShifted[1,3]
         x3 = x1 - y1 / (y1 - y2) * (x1 - x2)
-        self.backboneShifted[0,2] = x3
-        self.backboneShifted[1,2] = 0.0
+        self.backboneShifted[0,3] = x3
+        self.backboneShifted[1,3] = 0.0
 
     def CP_cmdLine(self, vector):
         lambda_S, lambda_C, lambda_A, lambda_K = vector[0], vector[1], vector[0], vector[2]
-        tempList = [self.K0, self.a_s, self.a_s, self.Fy, -self.Fy, self.lambda_S, self.lambda_C, self.lambda_A, self.lambda_K, self.cS, self.cS, self.cA, self.CK, self.thetap, self.thetapc, self.Res, self.Res, self.thetau, self.D, self.D]
-        return ' '.join(tempList)
+        tempList = [self.K0, self.a_s, self.a_s, self.Fy, -self.Fy, lambda_S, lambda_C, lambda_A, lambda_K, self.cS, self.cC, self.cA, self.cK, self.thetap, self.thetap, self.thetapc, self.thetapc, self.Res, self.Res, self.thetau, self.thetau, self.D, self.D]
+        return ' '.join([str(item) for item in tempList])
 
-    def renderTemplate(self, outPath, vector):
+    def renderTemplate(self, curID, vector):
+        filePath = '{0}/{1}'.format(self.workingPath, curID)
         temp = self.template
         #replace parameters
         replaceContents = {\
             '{{CP_CMDLine}}': self.CP_cmdLine(vector),
-            '{{outname}}': outPath,
+            '{{outname}}': filePath,
         }
 
-        for key in replateContents:
-            temp = temp.replace(key, replateContents[key])
-        f = open('{0}/{0}.tcl'.format(outPath), 'w')
+        for key in replaceContents:
+            temp = temp.replace(key, replaceContents[key])
+        f = open('{0}/{1}.tcl'.format(self.workingPath, curID), 'w')
         f.write(temp)
         f.close()
 
-    def runOpenSees(self, filePath):
+    def runOpenSees(self, curID):
+        filePath = '{0}/{1}'.format(self.workingPath, curID)
         os.system('opensees {0}.tcl'.format(filePath))
         dataX = np.loadtxt('{0}_rotation.out'.format(filePath)) * -1.0
         dataY = np.loadtxt('{0}_moment.out'.format(filePath))
         try:
-            os.remove('opensees {0}.tcl'.format(filePath))
+            os.remove('{0}.tcl'.format(filePath))
             os.remove('{0}_rotation.out'.format(filePath))
             os.remove('{0}_moment.out'.format(filePath))
         except:
@@ -114,10 +118,9 @@ class CalCP:
         return dataX, dataY
 
     def Analyze(self, vector):
-        tf = tempfile.NamedTemporaryFile()
-        outPath = tf.name
-        self.renderTemplate(outPath, vector)
-        dataX, dataY = self.runOpenSees(outPath)
+        curID = self.id_generator()
+        self.renderTemplate(curID, vector)
+        dataX, dataY = self.runOpenSees(curID)
         fitness = self.Fitness(dataX, dataY)
         return np.vstack((dataX, dataY)), fitness
 
@@ -125,11 +128,11 @@ class CalCP:
         output, fitness = self.Analyze(vector)
         return fitness
 
-    def Fitness(dataX, dataY):
+    def Fitness(self, dataX, dataY):
         ind, data1, data2 = self.findTurning(dataX, dataY)
         data1, data2 = self.monoData(data1, data2)
-        data = self.simplifiedData(data1, data2, self.targetBB[0])
-        fitness = -1.0 * np.sum(np.abs(data2 - np.targetBB[1]))
+        data = self.simplifyData(data1, data2, self.BBcyclicX[0])
+        fitness = -1.0 * np.sum(np.abs(data2 - self.BBcyclicY[1]))
         return fitness
 
     def convertDisp(self):
@@ -141,7 +144,7 @@ class CalCP:
         temp2 = np.cumsum(data_d * (dataY[1:] - dataY[:-1]) / 2.0)
         return np.vstack((temp1, temp2))
 
-    def simplifyData(dataX, dataY, xRange):
+    def simplifyData(self, dataX, dataY, xRange):
         outX = xRange
         f = interp1d(dataX, dataY)
         outY = f(xRange)
@@ -174,3 +177,5 @@ class CalCP:
         output = np.vstack((output, [dataX.size-1, dataX[-1], dataY[-1]]))
         return output[:,0], output[:,1], output[:,2]
 
+    def id_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
+        return ''.join(random.choice(chars) for _ in range(size))
