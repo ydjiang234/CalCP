@@ -17,7 +17,8 @@ targetData = np.loadtxt('targetData.txt').T
 targetData[1] = targetData[1] * 1.0e6
 ampFactor = 20.0
 d_incr = 0.00125
-cal = CalCP(A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='/Users/JYD/Documents/tmp')
+cal = CalCP(A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='D:/Tmp/')
+
 
 var_num = 3
 var_range = np.array([
@@ -29,7 +30,7 @@ var_digit = [100, 100, 100]
 population = 100
 mutation_prop = 0.1
 tol = 1.0e-03 
-max_iter = 100
+max_iter = 20
 
 
 GA = Genetic_Algorithm(var_range, var_digit, population, cal.fit_fun, cross_num=1, sel_por=0.3, mutation_prop=0.1)
@@ -38,6 +39,7 @@ vector = np.zeros((1,var_num))
 for i in range(max_iter):
     GA.evolve()
     vector_max, fitness_max = GA.Optimized()
+    print('Iteration {0}, current solution is {1} {2} {3}'.format(i, vector_max[0], vector_max[1], vector_max[2]))
     fitness = np.append(fitness, fitness_max)
     vector = np.vstack((vector, vector_max))
     if i == 0:
@@ -45,11 +47,12 @@ for i in range(max_iter):
     if fitness_max >= -tol:
         break
 
+print('Best solution is {1} {2} {3}'.format(i, vector_max[0], vector_max[1], vector_max[2]))
 data, fitness1 = cal.Analyze(vector_max)
 fig, axes = plt.subplots(1,2)
 axes[0].plot(fitness)
 axes[1].plot(data[0], data[1])
 axes[1].plot(targetData[0], targetData[1])
-print(vector_max)
+
 
 plt.show()

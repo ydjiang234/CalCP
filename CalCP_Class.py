@@ -2,7 +2,7 @@ import os
 import string
 import random
 import numpy as np
-import tempfile
+import subprocess
 from scipy.interpolate import interp1d
 
 class CalCP:
@@ -52,7 +52,7 @@ class CalCP:
         self.preRender();
         #initial backbone
         self.BBcyclicX, self.BBcyclicY = self.monoData(self.dataTX, self.dataTY)
-        xRange = np.linspace(self.BBcyclicX[0], self.BBcyclicX[-1], self.considerNum)
+        self.xRange = np.linspace(self.BBcyclicX[0], self.BBcyclicX[-1], self.considerNum)
 
     def preRender(self):
         #load template
@@ -106,7 +106,7 @@ class CalCP:
 
     def runOpenSees(self, curID):
         filePath = '{0}/{1}'.format(self.workingPath, curID)
-        os.system('opensees {0}.tcl'.format(filePath))
+        subprocess.check_call('opensees {0}.tcl'.format(filePath), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         dataX = np.loadtxt('{0}_rotation.out'.format(filePath)) * -1.0
         dataY = np.loadtxt('{0}_moment.out'.format(filePath))
         try:
@@ -131,8 +131,8 @@ class CalCP:
     def Fitness(self, dataX, dataY):
         ind, data1, data2 = self.findTurning(dataX, dataY)
         data1, data2 = self.monoData(data1, data2)
-        data = self.simplifyData(data1, data2, self.BBcyclicX[0])
-        fitness = -1.0 * np.sum(np.abs(data2 - self.BBcyclicY[1]))
+        data1, data2 = self.simplifyData(data1, data2, self.BBcyclicX)
+        fitness = -1.0 * np.sum(np.abs(data2 - self.BBcyclicY))
         return fitness
 
     def convertDisp(self):
