@@ -9,7 +9,7 @@ class CalCP:
 
     def __init__(self, A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='./Working'):
         self.A = A
-        self.I = L
+        self.I = I
         self.L = L
         self.revK = revK
         self.backbone = backbone
@@ -43,7 +43,7 @@ class CalCP:
         self.thetap = self.thetac - self.thetay
         self.thetapc = self.backboneShifted[0,3] - self.thetac
         self.a_s = (self.Fc - self.Fy) / self.thetap / self.K0 #be carefule, use K0 or K0amp
-        self.a_samp = (self.Fc - self.Fy) / self.thetap / self.K0amp #be carefule, use K0 or K0amp
+        self.a_samp = self.a_s * (self.ampFactor + 1.0) #be carefule, use K0 or K0amp
         #for the reverse material
         self.revKamp = self.revK
         #other
@@ -89,6 +89,16 @@ class CalCP:
         tempList = [self.K0, self.a_s, self.a_s, self.Fy, -self.Fy, lambda_S, lambda_C, lambda_A, lambda_K, self.cS, self.cC, self.cA, self.cK, self.thetap, self.thetap, self.thetapc, self.thetapc, self.Res, self.Res, self.thetau, self.thetau, self.D, self.D]
         return ' '.join([str(item) for item in tempList])
 
+    def savePara(self, filePath, vector):
+        lambda_S, lambda_C, lambda_A, lambda_K = vector[0], vector[1], vector[0], vector[2]
+        tempList = np.array([[self.K0amp, self.a_samp, self.a_s, self.Fy, -self.Fy, lambda_S, lambda_C, lambda_A, lambda_K, self.cS, self.cC, self.cA, self.cK, self.thetap, self.thetap, self.thetapc, self.thetapc, self.Res, self.Res, self.thetau, self.thetau, self.D, self.D]])
+        np.savetxt('{0}_IMK.out'.format(filePath), tempList)
+        tempList = np.array([[self.E, self.A, self.I]])
+        np.savetxt('{0}_El.out'.format(filePath), tempList)
+        tempList = np.array([self.revKamp])
+        np.savetxt('{0}_revK.out'.format(filePath), tempList)
+        
+        
     def renderTemplate(self, curID, vector):
         filePath = '{0}/{1}'.format(self.workingPath, curID)
         temp = self.template

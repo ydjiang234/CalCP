@@ -27,10 +27,10 @@ var_range = np.array([
     [0.0, 30.0],
     ])
 var_digit = [100, 100, 100]
-population = 100
+population = 10
 mutation_prop = 0.1
 tol = 1.0e-03 
-max_iter = 20
+max_iter = 1
 
 
 GA = Genetic_Algorithm(var_range, var_digit, population, cal.fit_fun, cross_num=1, sel_por=0.3, mutation_prop=0.1)
@@ -53,6 +53,7 @@ fig, axes = plt.subplots(1,2)
 axes[0].plot(fitness)
 axes[1].plot(data[0], data[1])
 axes[1].plot(targetData[0], targetData[1])
+cal.savePara('./Para', vector_max)
 
 
 plt.show()
