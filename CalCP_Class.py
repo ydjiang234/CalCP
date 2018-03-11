@@ -52,7 +52,7 @@ class CalCP:
         self.preRender();
         #initial backbone
         self.BBcyclicX, self.BBcyclicY = self.monoData(self.dataTX, self.dataTY)
-        self.xRange = np.linspace(self.BBcyclicX[0], self.BBcyclicX[-1], self.considerNum)
+        self.xRange = np.linspace(0.0, self.BBcyclicX[-1], self.considerNum)
 
     def preRender(self):
         #load template
@@ -157,7 +157,7 @@ class CalCP:
 
     def simplifyData(self, dataX, dataY, xRange):
         outX = xRange
-        f = interp1d(dataX, dataY)
+        f = interp1d(dataX, dataY, bounds_error=False,fill_value=(dataY[0], dataY[1]))
         outY = f(xRange)
         return outX, outY
 
