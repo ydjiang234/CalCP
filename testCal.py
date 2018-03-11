@@ -17,7 +17,7 @@ targetData = np.loadtxt('targetData.txt').T
 targetData[1] = targetData[1] * 1.0e6
 ampFactor = 20.0
 d_incr = 0.00125
-cal = CalCP(A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='D:/Tmp/')
+cal = CalCP(A, I, L, revK, backbone, targetData, ampFactor, d_incr, templatePath='./Tcl_Template', workingPath='/Users/JYD/Documents/Tmp/')
 
 
 var_num = 3

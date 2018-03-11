@@ -38,8 +38,8 @@ recorder Node -file "${outname}_moment.out" -node 1 -dof 3 reaction;
 recorder Node -file "${outname}_rotation.out" -node 2 -dof 3 disp;
 
 
-source "D:/Git/OPS/Shared_Proc/Analysis.tcl"
-#source "/Users/JYD/Documents/Git/OPS/Shared_Proc/Analysis.tcl"
+#source "D:/Git/OPS/Shared_Proc/Analysis.tcl"
+source "/Users/JYD/Documents/Git/OPS/Shared_Proc/Analysis.tcl"
 set AlgOrder [list Newton NewtonLineSearch]
 constraints Plain;
 numberer Plain;

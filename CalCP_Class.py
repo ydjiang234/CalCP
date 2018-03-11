@@ -116,7 +116,8 @@ class CalCP:
 
     def runOpenSees(self, curID):
         filePath = '{0}/{1}'.format(self.workingPath, curID)
-        subprocess.check_call('opensees {0}.tcl'.format(filePath), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        subprocess.call(args=['opensees', '{0}.tcl'.format(filePath)], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        #os.system('opensees {0}.tcl'.format(filePath))
         dataX = np.loadtxt('{0}_rotation.out'.format(filePath)) * -1.0
         dataY = np.loadtxt('{0}_moment.out'.format(filePath))
         try:
