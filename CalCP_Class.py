@@ -91,7 +91,7 @@ class CalCP:
 
     def savePara(self, filePath, vector):
         lambda_S, lambda_C, lambda_A, lambda_K = vector[0], vector[1], vector[0], vector[2]
-        tempList = np.array([[self.K0amp, self.a_s, self.a_s, self.Fy, -self.Fy, lambda_S, lambda_C, lambda_A, lambda_K, self.cS, self.cC, self.cA, self.cK, self.thetap, self.thetap, self.thetapc, self.thetapc, self.Res, self.Res, self.thetau, self.thetau, self.D, self.D]])
+        tempList = np.array([[self.K0amp, self.a_samp, self.a_samp, self.Fy, -self.Fy, lambda_S, lambda_C, lambda_A, lambda_K, self.cS, self.cC, self.cA, self.cK, self.thetap, self.thetap, self.thetapc, self.thetapc, self.Res, self.Res, self.thetau, self.thetau, self.D, self.D]])
         np.savetxt('{0}_IMK.out'.format(filePath), tempList)
         tempList = np.array([[self.E, self.A, self.I]])
         np.savetxt('{0}_El.out'.format(filePath), tempList)
